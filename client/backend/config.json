@@ -1,0 +1,13 @@
+{
+  "connectionProfile": "${process.env.CONFIG_CONNECTION_PROFILE}",
+  "appAdmin": "admin",
+  "orgMSPID": "${process.env.CONFIG_MSPID}",
+  "caName": "${process.env.CONFIG_CA_NAME}",
+  "gatewayDiscovery": {
+    "enabled": true,
+    "asLocalhost": true
+  }
+}
+
+
+
