@@ -79,58 +79,6 @@ app.post('/rest/participants/auth', async (req, res) => {
     }
 });
 
-app.post('/addNotaryLog', async (req, res) => {
-    let networkObj = await network.connectToNetwork(req.body.participantId);
-
-    if (networkObj.error) {
-        res.status(400).json({ message: networkObj.error });
-    }
-
-    let invokeResponse = await network.addNotaryLog(networkObj, req.body.participantId, req.body.type, req.body.logText);
-
-    if (invokeResponse.error) {
-        res.status(400).json({ message: invokeResponse.error });
-    } else {
-        res.setHeader('Content-Type', 'application/json');
-        res.status(201).send(invokeResponse);
-    }
-});
-
-app.get('/getNotaryLog', async (req, res) => {
-    let networkObj = await network.connectToNetwork(req.query.participantId);
-
-    if (networkObj.error) {
-        res.status(400).json({ message: networkObj.error });
-    }
-
-    let invokeResponse = await network.getNotaryLog(networkObj, req.body.id);
-
-    if (invokeResponse.error) {
-        res.status(400).json({ message: invokeResponse.error });
-    } else {
-        res.setHeader('Content-Type', 'application/json');
-        res.status(200).send(invokeResponse);
-    }
-});
-
-app.get('/getAllNotaryLogs', async (req, res) => {
-    let networkObj = await network.connectToNetwork(req.query.participantId);
-
-    if (networkObj.error) {
-        res.status(400).json({ message: networkObj.error });
-        return;
-    }
-
-    let invokeResponse = await network.getAllNotaryLogs(networkObj, req.params.participantId);
-
-    if (invokeResponse.error) {
-        res.status(400).json({ message: invokeResponse.error });
-    } else {
-        res.setHeader('Content-Type', 'application/json');
-        res.status(200).send(invokeResponse);
-    }
-});
-
 app.get('/test', async (req, res) => {
     return res.status(200).send('test');
 })
