@@ -12,14 +12,13 @@ const { v4: uuidv4 } = require('uuid');
 const configPath = path.join(process.cwd(), './config.json');
 const configJSON = fs.readFileSync(configPath, 'utf8');
 const config = JSON.parse(configJSON);
-require('dotenv').config();
 
 // let userName = config.userName;
 let gatewayDiscovery = config.gatewayDiscovery;
 let appAdmin = config.appAdmin;
 
 // connect to the connection file
-const ccpPath = path.resolve(process.env.FABRIC_PATH, process.env.CONFIG_CONNECTION_PROFILE);
+const ccpPath = path.resolve(process.env.FABRIC_PATH, config.connectionProfile);
 const ccp = JSON.parse(fs.readFileSync(ccpPath, 'utf8'));
 
 exports.getAdminUser = async function () {

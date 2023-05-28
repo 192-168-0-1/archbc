@@ -4,25 +4,20 @@
 
 'use strict';
 
-const { log } = require('console');
 const FabricCAServices = require('fabric-ca-client');
 const { Wallets } = require('fabric-network');
 const fs = require('fs');
 const path = require('path');
-require('dotenv').config();
 
 async function main() {
     try {
         // load the network configuration
-        console.log('env variable ' + process.env.PATH_URL)
-        console.log('url variable ' + process.env.PATH_URL)
-        console.log('json_connection variable ' + process.env.PATH_JSON_CONNECTION)
-        const ccpPath = path.resolve(process.env.FABRIC_PATH,'test-network','organizations', 'peerOrganizations', process.env.PATH_URL, process.env.PATH_JSON_CONNECTION);
+        const ccpPath = path.resolve(process.env.FABRIC_PATH,'test-network','organizations', 'peerOrganizations', 'org1.example.com', 'connection-org1.json');
         const ccp = JSON.parse(fs.readFileSync(ccpPath, 'utf8'));
-        console.log("This is the network configuration", JSON.stringify(ccp, 0, 2));
+        console.log("Network configuration", JSON.stringify(ccp, 0, 2));
 
         // Create a new CA client for interacting with the CA.
-        const caInfo = ccp.certificateAuthorities[process.env.CONFIG_CA_NAME];
+        const caInfo = ccp.certificateAuthorities['ca.org1.example.com'];
         const caTLSCACerts = caInfo.tlsCACerts.pem;
         const ca = new FabricCAServices(caInfo.url, { trustedRoots: caTLSCACerts, verify: false }, caInfo.caName);
 
@@ -45,7 +40,7 @@ async function main() {
                 certificate: enrollment.certificate,
                 privateKey: enrollment.key.toBytes(),
             },
-            mspId: process.env.CONFIG_MSPID,
+            mspId: 'Org1MSP',
             type: 'X.509',
         };
         await wallet.put('admin', x509Identity);

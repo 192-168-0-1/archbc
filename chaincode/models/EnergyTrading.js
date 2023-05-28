@@ -9,6 +9,7 @@ class EnergyTrading extends State{
           this.setProducer(producer);
           this.setEnergyType(energyType);
           this.setUnits(units);
+          this.transactionHistory = [];
       }
 
       // getters and setters
@@ -50,6 +51,14 @@ class EnergyTrading extends State{
 
       setUnits(units) {
           this.units = units;
+      }
+
+      getTransactionHistory() {
+        return this.transactionHistory;
+      }
+
+      setTransactionHistory(transactionHistory) {
+          this.transactionHistory = transactionHistory;
       }
 
       static deserialize(buffer) {

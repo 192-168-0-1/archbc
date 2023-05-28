@@ -48,7 +48,7 @@ exports.createWebSocketServer = async function () {
     wss.on('connection', function connection(ws) {
 
         var currentParticipant;
-        
+
         ws.on('message', function incoming(participant) {
 
             console.log('message',participant);
@@ -61,7 +61,7 @@ exports.createWebSocketServer = async function () {
                 console.log(`${currentParticipant.id} added`)
                 currentParticipant.connections = [ws];
                 participants[currentParticipant.id] = currentParticipant;
-            }            
+            }
             console.log(participants);
         });
 
@@ -88,7 +88,3 @@ exports.createWebSocketServer = async function () {
         ws.send('{"message":"added"}');
     });
 }
-
-
-
-
