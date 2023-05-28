@@ -1,13 +1,10 @@
 {
-  "connectionProfile": "${process.env.CONFIG_CONNECTION_PROFILE}",
+  "connectionProfile": "test-network/organizations/peerOrganizations/org1.example.com/connection-org1.json",
   "appAdmin": "admin",
-  "orgMSPID": "${process.env.CONFIG_MSPID}",
-  "caName": "${process.env.CONFIG_CA_NAME}",
+  "orgMSPID": "Org1MSP",
+  "caName": "ca.org1.example.com",
   "gatewayDiscovery": {
     "enabled": true,
     "asLocalhost": true
   }
 }
-
-
-
