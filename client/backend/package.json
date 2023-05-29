@@ -1,7 +1,7 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "None",
+  "description": "EnergyContract",
   "main": "index.js",
   "scripts": {
     "start": "./node_modules/nodemon/bin/nodemon.js src/app.js",
@@ -10,11 +10,14 @@
   "author": "MFK",
   "license": "ISC",
   "dependencies": {
+    "body-parser": "^1.19.0",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "express": "^4.17.1",
     "fabric-ca-client": "2.2.17",
     "fabric-network": "2.2.17",
+    "google-auth-library": "^5.6.1",
+    "googleapis": "^45.0.0",
     "nodemon": "^2.0.7",
     "uuid": "^9.0.0",
     "ws": "^7.4.5"
