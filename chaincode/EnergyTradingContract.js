@@ -69,6 +69,8 @@ class EnergyTradingContract extends Contract{
 
           await ctx.stub.putState(buyingAssetNumber, buyingAsset.serialize());
           await ctx.stub.putState(sellingAssetNumber, sellingAsset.serialize());
+
+          stb.setEvent("EnergyTraded");
           console.info('============= END : Trading Energy ===========');
       }
 
