@@ -1,5 +1,6 @@
 'use strict';
 
-const energyTradingContract = require('./EnergyTradingContract');
+const energyTradingContract = require('./energy-trading-contract');
+const identityContract = require('./identity-contract');
 
-module.exports.contracts = [energyTradingContract];
+module.exports.contracts = [energyTradingContract, identityContract];

@@ -122,14 +122,12 @@ exports.connectToNetwork = async function (userName) {
         const network = await gateway.getNetwork('mychannel');
 
         // Get the contract we have installed on the peer
-        const notaryContract = await network.getContract('notary-chaincode', 'NotaryContract');
-        const policyContract = await network.getContract('notary-chaincode', 'PolicyContract');
+        const energyTradingContract = await network.getContract('energy-trading-chaincode', 'EnergyTradingContract');
         const identityContract = await network.getContract('notary-chaincode', 'IdentityContract');
 
         let networkObj = {
             contracts: [
-                notaryContract,
-                policyContract,
+                energyTradingContract,
                 identityContract
             ],
             network: network,
@@ -169,6 +167,40 @@ exports.getParticipant = async function (networkObj, participantId) {
         let response = await networkObj.contracts
             .find((contract) => contract.namespace === 'IdentityContract')
             .evaluateTransaction('getParticipant', participantId);
+        await networkObj.gateway.disconnect();
+        return response.toString();
+    } catch (error) {
+        console.log(error);
+        let response = { error: 'the following errors ocurred: ' };
+        for (var key in error) {
+            response.error += key + ' - ' + error[key];
+        }
+        return response;
+    }
+};
+
+exports.createAsset = async function (networkObj, participantId, id, producer, energyType, units) {
+    try {
+        let response = await networkObj.contracts
+            .find((contract) => contract.namespace === 'EnergyTradingContract')
+            .submitTransaction('createAsset', participantId, id, producer, energyType, units);
+        await networkObj.gateway.disconnect();
+        return response.toString();
+    } catch (error) {
+        console.log(error);
+        let response = { error: 'the following errors ocurred: ' };
+        for (var key in error) {
+            response.error += key + ' - ' + error[key];
+        }
+        return response;
+    }
+};
+
+exports.tradeEnergy = async function (networkObj, buyerId, buyingAssetNumber, sellerId, sellingAssetNumber, units) {
+    try {
+        let response = await networkObj.contracts
+            .find((contract) => contract.namespace === 'EnergyTradingContract')
+            .submitTransaction('tradeEnergy', buyerId, buyingAssetNumber, sellerId, sellingAssetNumber, units);
         await networkObj.gateway.disconnect();
         return response.toString();
     } catch (error) {

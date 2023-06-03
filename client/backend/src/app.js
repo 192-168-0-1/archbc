@@ -79,6 +79,42 @@ app.post('/rest/participants/auth', async (req, res) => {
     }
 });
 
+app.post('/rest/assets', async (req, res) => {
+    let adminUser = await network.getAdminUser();
+    let networkObj = await network.connectToNetwork(adminUser);
+
+    if (networkObj.error) {
+        res.status(400).json({ message: networkObj.error });
+    }
+
+    let invokeResponse = await network.createAsset(networkObj, req.body.participantId, req.body.id, req.body.producer, req.body.energyType, req.body.units);
+
+    if (invokeResponse.error) {
+        res.status(400).json({ message: invokeResponse.error });
+    } else {
+        res.setHeader('Content-Type', 'application/json');
+        res.status(201).send(invokeResponse);
+    }
+});
+
+app.post('/rest/trade', async (req, res) => {
+    let adminUser = await network.getAdminUser();
+    let networkObj = await network.connectToNetwork(adminUser);
+
+    if (networkObj.error) {
+        res.status(400).json({ message: networkObj.error });
+    }
+
+    let invokeResponse = await network.tradeEnergy(networkObj, req.body.buyerId, req.body.buyingAssetNumber, req.body.sellerId, req.body.sellingAssetNumber, req.body.units);
+
+    if (invokeResponse.error) {
+        res.status(400).json({ message: invokeResponse.error });
+    } else {
+        res.setHeader('Content-Type', 'application/json');
+        res.status(201).send(invokeResponse);
+    }
+});
+
 app.get('/test', async (req, res) => {
     return res.status(200).send('test');
 })

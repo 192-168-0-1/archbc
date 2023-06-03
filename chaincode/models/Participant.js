@@ -21,8 +21,6 @@ class Participant extends State {
         return this.role;
     }
 
-    /** basic setters */
-
     setId(id) {
         this.id = id;
     }
