@@ -89,6 +89,12 @@ class EnergyTradingContract extends Contract{
       return match !== null && match[1] === 'admin';
   }
 
+  isDistributor(identity) {
+      return identity.assertAttributeValue('role', 'Distributor');
+  }
+  isCustomer(identity) {
+    return identity.assertAttributeValue('role', 'Customer');
+  }
   isProducer(identity) {
       return identity.assertAttributeValue('role', 'Producer');
   }
