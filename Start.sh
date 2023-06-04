@@ -19,7 +19,7 @@ fi
 
 #start the new network and deploy ChainCode
 $SAMPLES/fabric-samples/test-network/network.sh up createChannel -ca -s couchdb
-$SAMPLES/fabric-samples/test-network/network.sh deployCC -ccn notary-chaincode -ccp $REPO/chaincode -ccv 1 -ccs 1 -ccl javascript
+$SAMPLES/fabric-samples/test-network/network.sh deployCC -ccn energy-trading-contract -ccp $REPO/chaincode -ccv 1 -ccs 1 -ccl javascript
 
 export FABRIC_PATH=$SAMPLES/fabric-samples 
 

@@ -11,11 +11,11 @@ let eventHandler = require('./event-handler.js');
 let network = require('./fabric/network.js');
 
 
-eventHandler.on("EnergyTraded", (event) => {
+// eventHandler.on("EnergyTraded", (event) => {
     
-    //Enery trade event logic here
+//     //Enery trade event logic here
 
-});
+// });
 app.get('/rest/participants', async (req, res) => {
     let adminUser = await network.getAdminUser();
 
