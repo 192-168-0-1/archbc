@@ -2,7 +2,7 @@
 
 const { Contract } = require('fabric-contract-api');
 const Participant = require("./models/Participant");
-const Role = require('./enum/role');
+const Role = require('./roles/role');
 
 class IdentityContract extends Contract {
     /**
@@ -27,43 +27,25 @@ class IdentityContract extends Contract {
     }
 
     isRoleValid(role) {
-        if (role !== Role.AMDEX_ADMIN && role !== Role.DATA_OFFICER && role !== Role.DATA_SCIENTIST) {
+        if (role !== Role.DISTRIBUTOR && role !== Role.CUSTOMER && role !== Role.PRODUCER) {
             return false;
         }
         return true;
     }
 
-    /**
-     *
-     * assetExists
-     *
-     * Checks to see if a key exists in the world state.
-     * @param assetId - the key of the asset to read
-     * @returns boolean indicating if the asset exists or not.
-     */
     async assetExists(ctx, assetId) {
 
         const buffer = await ctx.stub.getState(assetId);
         return (!!buffer && buffer.length > 0);
     }
 
-    /**
-     * Create Participant
-     *
-     * This transaction is started by the participant during sign-up
-     *
-     * @param id - The participant identifier
-     * @param name - The participant name
-     * @param role - The role of the participant
-     * @returns the newly created participant
-     */
     async createParticipant(ctx, id, name, role) {
 
         let identity = ctx.clientIdentity;
 
         if (!this.isRoleValid(role)) {
             throw new Error(`The specified role is not valid, please enter a correct one. Valid roles are:
-            ${Role.AMDEX_ADMIN}, ${Role.DATA_OFFICER}, ${Role.DATA_SCIENTIST}`);
+            ${Role.DISTRIBUTOR}, ${Role.CUSTOMER}, ${Role.PRODUCER}`);
         }
 
         if (!this.isAdmin(identity)) {
@@ -90,16 +72,6 @@ class IdentityContract extends Contract {
         return JSON.stringify(participant);
     }
 
-
-    /**
-     * Get participant
-     *
-     * This transaction is started by the farmer that collected eggs
-     * and stored them in a box
-     *
-     * @param id - The participant identifier
-     * @returns the participant
-     */
     async getParticipant(ctx, id) {
         let identity = ctx.clientIdentity;
 
@@ -128,7 +100,7 @@ class IdentityContract extends Contract {
 
         if (!this.isRoleValid(role)) {
             throw new Error(`The specified role is not valid, please enter a correct one. Valid roles are:
-            ${Role.AMDEX_ADMIN}, ${Role.DATA_OFFICER}, ${Role.DATA_SCIENTIST}`);
+            ${Role.DISTRIBUTOR}, ${Role.CUSTOMER}, ${Role.PRODUCER}`);
         }
 
         if (!this.isAdmin(identity)) {

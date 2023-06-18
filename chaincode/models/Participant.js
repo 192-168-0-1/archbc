@@ -1,12 +1,14 @@
 const State = require('./State.js');
 
+const Role = require('../roles/role');
+
 class Participant extends State {
 
     constructor(id, name, role) {
         super('Participant');
         this.setId(id);
         this.setName(name);
-        this.setRole(role);
+        this.setRole(role || Role.UNASSIGNED);
     }
 
     getId() {
@@ -20,6 +22,8 @@ class Participant extends State {
     getRole() {
         return this.role;
     }
+
+    /** basic setters */
 
     setId(id) {
         this.id = id;

@@ -1,143 +1,153 @@
 'use strict';
 
-// Energy unit: kilowatt-hour (kWh)
-
 const {Contract} = require('fabric-contract-api');
 const EnergyTrading = require("./models/EnergyTrading");
-const Participant = require("./models/Participant");
+const Role = require('./roles/role');
 
-class EnergyTradingContract extends Contract{
+class EnergyTradingContract extends Contract {
 
-      async initLedger(ctx) {
-          console.info('============= START : Initialize Ledger ===========');
-          const assets = [
-              new EnergyTrading('Participant1', 'Asset1', 'Producer1', 'Solar', 100),
-              new EnergyTrading('Participant2', 'Asset2', 'Producer2', 'Wind', 300),
-          ];
+    async initLedger(ctx) {
+        console.log('Init ledger called');
+    }
 
-          for (let i = 0; i < assets.length; i++) {
-              assets[i].transactionHistory = [];
-              await ctx.stub.putState('ASSET' + i, assets[i].serialize());
-              console.info('Added <--> ', assets[i]);
-          }
-          console.info('============= END : Initialize Ledger ===========');
-      }
+    getParticipantRole(identity) {
+        return identity.getAttributeValue('role');
+    }
 
-      async createAsset(ctx, participantId, id, producer, energyType, units) {
-          console.info('============= START : Create Asset ===========');
+    async assetExists(ctx, assetId) {
+        const buffer = await ctx.stub.getState(assetId);
+        return (!!buffer && buffer.length > 0);
+    }
 
-          const asset = new EnergyTrading(participantId, id, producer, energyType, units);
-          asset.transactionHistory = [];
+    // Create a new Asset
+    async createAsset(ctx, participantId, id, producer, energyType, units) {
+        console.info('START : Create Asset');
 
-          await ctx.stub.putState(id, asset.serialize());
-          console.info('============= END : Create Asset ===========');
-      }
+        const asset = new EnergyTrading(participantId, id, producer, energyType, units);
+        asset.transactionHistory = [];
 
-      async tradeEnergy(ctx, buyerId, buyingAssetNumber, sellerId, sellingAssetNumber, units) {
-          console.info('============= START : Trading Energy ===========');
+        await ctx.stub.putState(id, asset.serialise());
+        console.info('END : Create Asset');
+    }
 
-          const buyingAssetAsBytes = await ctx.stub.getState(buyingAssetNumber);
-          const sellingAssetAsBytes = await ctx.stub.getState(sellingAssetNumber);
+    // Trade energy between 2 peers
+    async tradeEnergy(ctx, buyerId, buyingAssetNumber, sellerId, sellingAssetNumber, units) {
+        console.info('START : Trading Energy');
 
-          if (!buyingAssetAsBytes || buyingAssetAsBytes.length === 0) {
-              throw new Error(`${buyingAssetNumber} does not exist`);
-          }
+        const buyingAssetAsBytes = await ctx.stub.getState(buyingAssetNumber);
+        const sellingAssetAsBytes = await ctx.stub.getState(sellingAssetNumber);
 
-          if (!sellingAssetAsBytes || sellingAssetAsBytes.length === 0) {
-              throw new Error(`${sellingAssetNumber} does not exist`);
-          }
+        if (!buyingAssetAsBytes || buyingAssetAsBytes.length === 0) {
+            throw new Error(`${buyingAssetNumber} does not exist`);
+        }
 
-          const buyingAsset = EnergyTrading.deserialize(buyingAssetAsBytes);
-          const sellingAsset = EnergyTrading.deserialize(sellingAssetAsBytes);
+        if (!sellingAssetAsBytes || sellingAssetAsBytes.length === 0) {
+            throw new Error(`${sellingAssetNumber} does not exist`);
+        }
 
-          if (sellingAsset.getUnits() < units) {
-              throw new Error('Not enough energy units for trading');
-          }
+        const buyingAsset = EnergyTrading.deserialize(buyingAssetAsBytes);
+        const sellingAsset = EnergyTrading.deserialize(sellingAssetAsBytes);
 
-          // Check permission
-          if (sellingAsset.getParticipantId() !== sellerId) {
-              throw new Error('Only the owner of the asset can sell it');
-          }
+        if (sellingAsset.getUnits() < units) {
+            throw new Error('Not enough energy units for trading');
+        }
 
-          // Update units and transaction history
-          buyingAsset.setUnits(buyingAsset.getUnits() + units);
-          sellingAsset.setUnits(sellingAsset.getUnits() - units);
+        // Check permission
+        console.log('Seller ID:', sellerId);
+        console.log('Selling Asset Participant ID:', sellingAsset.getParticipantId());
 
-          const transaction = { buyerId, sellerId, units, timestamp: new Date().toISOString() };
-          buyingAsset.transactionHistory.push(transaction);
-          sellingAsset.transactionHistory.push(transaction);
+        // Check permission
+        if (sellingAsset.getParticipantId() !== sellerId) {
+            throw new Error('Only the owner of the asset can sell it');
+        }
 
-          await ctx.stub.putState(buyingAssetNumber, buyingAsset.serialize());
-          await ctx.stub.putState(sellingAssetNumber, sellingAsset.serialize());
+        //Buyer and seller cannot be the same
+        if (buyerId === sellerId) {
+            throw new Error("Buyer and seller cannot be the same participant.");
+        }
 
-          stb.setEvent("EnergyTraded");
-          console.info('============= END : Trading Energy ===========');
-      }
+        // Update units and transaction history
+        buyingAsset.setUnits(buyingAsset.getUnits() + units);
+        sellingAsset.setUnits(sellingAsset.getUnits() - units);
 
-      isAdmin(identity) {
-          var match = identity.getID().match('.*CN=(.*)::');
-          return match !== null && match[1] === 'admin';
-      }
+        const transaction = {buyerId, sellerId, units, timestamp: new Date().toISOString(), targetAudience: [buyerId, sellerId]};
+        buyingAsset.transactionHistory.push(transaction);
+        sellingAsset.transactionHistory.push(transaction);
 
-      getParticipantId(identity) {
-          return identity.getAttributeValue('id');
-      }
+        await ctx.stub.putState(buyingAssetNumber, buyingAsset.serialise());
+        await ctx.stub.putState(sellingAssetNumber, sellingAsset.serialise());
 
-      async assetExists(ctx, assetId) {
+        // create a TradeCompleted event
+        const eventPayload = Buffer.from(JSON.stringify(transaction));
+        ctx.stub.setEvent('TradeCompleted', eventPayload);
 
-          const buffer = await ctx.stub.getState(assetId);
-          return (!!buffer && buffer.length > 0);
-      }
+        console.info('END : Trading Energy');
+    }
 
-      async createParticipant(ctx, id, name, role) {
+    // Get transaction history for a specific asset
+    async getTransactionHistory(ctx, assetId) {
+        const assetAsBytes = await ctx.stub.getState(assetId);
 
-          let identity = ctx.clientIdentity;
+        if (!assetAsBytes || assetAsBytes.length === 0) {
+            throw new Error(`${assetId} does not exist`);
+        }
 
-          if (!this.isAdmin(identity)) {
-              throw new Error(`Only administrators can create participants`);
-          }
+        const asset = EnergyTrading.deserialize(assetAsBytes);
 
-          // Generate a participant representation
-          let participant = new Participant(id, name, role);
+        return asset.getTransactionHistory();
+    }
 
-          // generate the key for the participant
-          let key = participant.getType() + ":" + participant.getId();
+    // Read an asset
+    async readAsset(ctx, assetId) {
+        console.info('START : Read Asset');
 
-          // check if the participant already exists
-          let exists = await this.assetExists(ctx, key);
+        const assetAsBytes = await ctx.stub.getState(assetId);
 
-          if (exists) {
-              throw new Error(`Participant with id ${key} already exists`);
-          }
+        if (!assetAsBytes || assetAsBytes.length === 0) {
+            throw new Error(`${assetId} does not exist`);
+        }
 
-          // update state with new participant
-          await ctx.stub.putState(key, participant.serialise())
+        const asset = EnergyTrading.deserialize(assetAsBytes);
 
-          // Return the new participant
-          return JSON.stringify(participant);
-      }
+        console.info('END : Read Asset');
 
-      async getParticipant(ctx, id) {
+        return asset;
+    }
 
-          let identity = ctx.clientIdentity;
+    // Update an asset
+    async updateAsset(ctx, assetId, newValues) {
+        console.info('START : Update Asset');
 
-          if (!id === this.getParticipantId(identity) && !this.isAdmin(identity)) {
-              throw new Error(`Only administrators can query other participants. Regular participants can get information of their own account`);
-          }
+        const exists = await this.assetExists(ctx, assetId);
+        if (!exists) {
+            throw new Error(`The asset ${assetId} does not exist`);
+        }
 
-          // get participant
-          const buffer = await ctx.stub.getState('Participant:'+id);
+        const assetAsBytes = await ctx.stub.getState(assetId);
+        const asset = EnergyTrading.deserialize(assetAsBytes);
 
-          // if participant was not found
-          if (!buffer || buffer.length == 0) {
-              throw new Error(`Participant with id ${id} was not found`);
-          }
+        Object.keys(newValues).forEach((key) => {
+            asset[key] = newValues[key];
+        });
 
-          // get object from buffer
-          const participant = Participant.deserialise(buffer);
+        await ctx.stub.putState(assetId, asset.serialise());
 
-          // Return the participant
-          return JSON.stringify(participant);
-      }
+        console.info('END : Update Asset');
+    }
+
+    // Delete an asset
+    async deleteAsset(ctx, assetId) {
+        console.info('START : Delete Asset');
+
+        const exists = await this.assetExists(ctx, assetId);
+        if (!exists) {
+            throw new Error(`The asset ${assetId} does not exist`);
+        }
+
+        await ctx.stub.deleteState(assetId);
+
+        console.info('END : Delete Asset');
+    }
 }
+
 module.exports = EnergyTradingContract;

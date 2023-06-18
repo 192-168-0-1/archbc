@@ -1,7 +1,7 @@
 {
   "name": "energy-trading-chaincode-client",
   "version": "1.0.0",
-  "description": "Here, we have the energy trading component",
+  "description": "Client for energy trading",
   "engines": {
     "node": ">=8",
     "npm": ">=5"

@@ -8,6 +8,8 @@ exports.registerListener = async function (network) {
 
         let networkObj = await network.connectToNetwork('admin');
 
+        //console.log(networkObj);
+
         if (networkObj.error) {
             console.error(networkObj.error);
             process.exit(1);
@@ -34,7 +36,12 @@ exports.registerListener = async function (network) {
 
         };
 
-        networkObj.contract.addContractListener(listener);
+        // We loop through each contract in the contracts array and we add the listener
+
+        for (let contract of networkObj.contracts) {
+            contract.addContractListener(listener);
+        }
+
 
     } catch(error) {
         console.error(error);

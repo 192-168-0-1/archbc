@@ -67,6 +67,20 @@ class EnergyTrading extends State{
           Object.assign(energyTrading, values);
           return energyTrading;
       }
+
+      static deserialize(buffer) {
+              const values = JSON.parse(buffer.toString());
+              const energyTrading = new EnergyTrading(
+                values.participantId,
+                values.id,
+                values.producer,
+                values.energyType,
+                values.units
+              );
+              Object.assign(energyTrading, values);
+              return energyTrading;
+          }
+
 }
 
 module.exports = EnergyTrading;
