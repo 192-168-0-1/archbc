@@ -123,7 +123,7 @@ exports.connectToNetwork = async function (userName) {
 
         // Get the contract we have installed on the peer
         const energyTradingContract = await network.getContract('energy-trading-chaincode', 'EnergyTradingContract');
-        const identityContract = await network.getContract('notary-chaincode', 'IdentityContract');
+        const identityContract = await network.getContract('energy-trading-chaincode', 'IdentityContract');
 
         let networkObj = {
             contracts: [
@@ -167,6 +167,9 @@ exports.getParticipant = async function (networkObj, participantId) {
         let response = await networkObj.contracts
             .find((contract) => contract.namespace === 'IdentityContract')
             .evaluateTransaction('getParticipant', participantId);
+
+        console.log(networkObj.contracts);
+
         await networkObj.gateway.disconnect();
         return response.toString();
     } catch (error) {

@@ -12,7 +12,7 @@ let network = require('./fabric/network.js');
 
 
 eventHandler.on("EnergyTraded", (event) => {
-    
+
     //Enery trade event logic here
 
 });

@@ -1,7 +1,7 @@
 {
   "name": "energy-trading-chaincode",
   "version": "1.0.0",
-  "description": "The folder containing the smart contracts for the notary component",
+  "description": "The folder contains the smart contract for trading energy",
   "main": "index.js",
   "engines": {
     "node": ">=12",
