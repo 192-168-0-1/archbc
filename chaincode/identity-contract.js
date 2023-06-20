@@ -38,7 +38,7 @@ class IdentityContract extends Contract {
 
         if (!this.isRoleValid(role)) {
             throw new Error(`The specified role is not valid, please enter a correct one. Valid roles are:
-            ${Role.AMDEX_ADMIN}, ${Role.DATA_OFFICER}, ${Role.DATA_SCIENTIST}`);
+            ${Role.CUSTOMER}, ${Role.DISTRIBUTOR}, ${Role.PRODUCER}, ${Role.PRODUCER_CUSTOMER}`);
         }
 
         if (!this.isAdmin(identity)) {
@@ -134,7 +134,7 @@ class IdentityContract extends Contract {
 
         if (!this.isRoleValid(role)) {
             throw new Error(`The specified role is not valid, please enter a correct one. Valid roles are:
-            ${Role.AMDEX_ADMIN}, ${Role.DATA_OFFICER}, ${Role.DATA_SCIENTIST}`);
+            ${Role.CUSTOMER}, ${Role.DISTRIBUTOR}, ${Role.PRODUCER}, ${Role.PRODUCER_CUSTOMER}`);
         }
 
         if (!this.isAdmin(identity)) {

@@ -2,6 +2,7 @@
 
 const {Contract} = require('fabric-contract-api');
 const EnergyTrading = require("./models/EnergyTrading");
+const Participant = require("./models/Participant");
 const Role = require('./roles/role');
 
 class EnergyTradingContract extends Contract {
@@ -10,33 +11,18 @@ class EnergyTradingContract extends Contract {
         console.log('Init ledger called');
     }
 
+    getParticipantRole(identity) {
+        return identity.getAttributeValue('role');
+    }
+
     async assetExists(ctx, assetId) {
         const buffer = await ctx.stub.getState(assetId);
         return (!!buffer && buffer.length > 0);
     }
 
-    isDistributor(identity) {
-        return identity.assertAttributeValue('role', 'DISTRIBUTOR');
-    }
-
-    isCustomer(identity) {
-        return identity.assertAttributeValue('role', 'CUSTOMER');
-    }
-
-    isProducer(identity) {
-        return identity.assertAttributeValue('role', 'PRODUCER');
-    }
-
-    isProducerCustomer(identity) {
-        return identity.assertAttributeValue('role', 'PRODUCER_CUSTOMER');
-    }
-
-    // Create a new Asset
+    // Check if participant exists and has the role of 'PRODUCER'
     async createAsset(ctx, participantId, id, producer, energyType, units) {
         console.info('START : Create Asset');
-
-        let identity = ctx.clientIdentity;
-        console.log(identity)
 
         // Check if participant exists
         const participantAsBytes = await ctx.stub.getState('Participant:'+participantId);
@@ -44,9 +30,11 @@ class EnergyTradingContract extends Contract {
             throw new Error(`Participant with id ${participantId} does not exist`);
         }
 
-        // Only Distributors and Producers can create assets
-        if (!this.isDistributor(identity) && !this.isProducer(identity)) {
-            throw new Error('Permission denied: Only Distributors and Producers can create assets');
+        const participant = Participant.deserialise(participantAsBytes);
+
+        // Only allow participants with role 'PRODUCER' to create an asset
+        if (participant.role !== Role.PRODUCER && participant.role !== Role.PRODUCER_CUSTOMER) {
+            throw new Error(`Participant with id ${participantId} does not have the required role to create an asset`);
         }
 
         const asset = new EnergyTrading(participantId, id, producer, energyType, units);
@@ -56,11 +44,16 @@ class EnergyTradingContract extends Contract {
         console.info('END : Create Asset');
     }
 
-
-
-    // Trade energy between 2 peers
+    // Only allow 'DISTRIBUTOR' role to trade energy
     async tradeEnergy(ctx, buyerId, buyingAssetNumber, sellerId, sellingAssetNumber, units) {
         console.info('START : Trading Energy');
+
+        let identity = ctx.clientIdentity;
+        const role = this.getParticipantRole(identity);
+
+        if (role !== Role.DISTRIBUTOR) {
+            throw new Error("Only DISTRIBUTOR can trade energy");
+        }
 
         const buyingAssetAsBytes = await ctx.stub.getState(buyingAssetNumber);
         const sellingAssetAsBytes = await ctx.stub.getState(sellingAssetNumber);
