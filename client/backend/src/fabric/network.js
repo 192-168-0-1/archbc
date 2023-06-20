@@ -19,8 +19,9 @@ let gatewayDiscovery = config.gatewayDiscovery;
 let appAdmin = config.appAdmin;
 
 // connect to the connection file
-const ccpPath = path.resolve(process.env.FABRIC_PATH, process.env.CONFIG_CONNECTION_PROFILE);
+const ccpPath = path.resolve(process.env.FABRIC_PATH, config.connectionProfile);
 const ccp = JSON.parse(fs.readFileSync(ccpPath, 'utf8'));
+
 
 exports.getAdminUser = async function () {
     return appAdmin;
@@ -28,7 +29,7 @@ exports.getAdminUser = async function () {
 
 exports.registerUser = async function (userId, name, role) {
 
-    if (role !== Role.DISTRIBUTOR && role !== Role.CUSTOMER && role !== Role.PRODUCER) {
+    if (role !== Role.DISTRIBUTOR && role !== Role.CUSTOMER && role !== Role.PRODUCER && role !== Role.PRODUCER_CUSTOMER) {
         let response = {};
         response.error = 'This is not a valid role'
         return response;
@@ -60,7 +61,7 @@ exports.registerUser = async function (userId, name, role) {
         }
 
         // Create a new CA client for interacting with the CA.
-        const caURL = ccp.certificateAuthorities[process.env.CONFIG_CA_NAME].url;
+        const caURL = ccp.certificateAuthorities['ca.org1.example.com'].url;
         const ca = new FabricCAServices(caURL);
 
         // build a user object for authenticating with the CA
@@ -92,7 +93,7 @@ exports.registerUser = async function (userId, name, role) {
                 certificate: enrollment.certificate,
                 privateKey: enrollment.key.toBytes(),
             },
-            mspId: process.env.CONFIG_MSPID,
+            mspId: 'Org1MSP',
             type: 'X.509',
         };
         await wallet.put(userId, x509Identity);
@@ -106,7 +107,7 @@ exports.registerUser = async function (userId, name, role) {
 };
 
 exports.reEnrollUser = async function (userId, name, role) {
-    if (role !== Role.DISTRIBUTOR && role !== Role.CUSTOMER && role !== Role.PRODUCER) {
+    if (role !== Role.DISTRIBUTOR && role !== Role.CUSTOMER && role !== Role.PRODUCER && role !== Role.PRODUCER_CUSTOMER) {
         let response = {};
         response.error = 'This is not a valid role'
         return response;
@@ -137,7 +138,7 @@ exports.reEnrollUser = async function (userId, name, role) {
             return response;
         }
 
-        const caURL = ccp.certificateAuthorities[process.env.CONFIG_CA_NAME].url;
+        const caURL = ccp.certificateAuthorities['ca.org1.example.com'].url;
         const ca = new FabricCAServices(caURL);
 
         // create an instance of the Identity Service which is necessary for updating a user in the CA
@@ -173,7 +174,7 @@ exports.reEnrollUser = async function (userId, name, role) {
                 certificate: enrollment.certificate,
                 privateKey: enrollment.key.toBytes(),
             },
-            mspId: process.env.CONFIG_MSPID,
+            mspId: 'Org1MSP',
             type: 'X.509',
         };
 

@@ -5,19 +5,12 @@ const Participant = require("./models/Participant");
 const Role = require('./roles/role');
 
 class IdentityContract extends Contract {
-    /**
-     * Utility function checking if a user is an admin
-     * @param {*} idString - the identity object
-     */
+
     isAdmin(identity) {
         var match = identity.getID().match('.*CN=(.*)::');
         return match !== null && match[1] === 'admin';
     }
 
-    /**
-     * Utility function to get the id of the participant
-     * @param {*} id - the id of the participant
-     */
     getParticipantId(identity) {
         return identity.getAttributeValue('id');
     }
@@ -27,7 +20,7 @@ class IdentityContract extends Contract {
     }
 
     isRoleValid(role) {
-        if (role !== Role.DISTRIBUTOR && role !== Role.CUSTOMER && role !== Role.PRODUCER) {
+        if (role !== Role.CUSTOMER && role !== Role.DISTRIBUTOR && role !== Role.PRODUCER && role !== Role.PRODUCER_CUSTOMER) {
             return false;
         }
         return true;
@@ -45,7 +38,7 @@ class IdentityContract extends Contract {
 
         if (!this.isRoleValid(role)) {
             throw new Error(`The specified role is not valid, please enter a correct one. Valid roles are:
-            ${Role.DISTRIBUTOR}, ${Role.CUSTOMER}, ${Role.PRODUCER}`);
+            ${Role.AMDEX_ADMIN}, ${Role.DATA_OFFICER}, ${Role.DATA_SCIENTIST}`);
         }
 
         if (!this.isAdmin(identity)) {
@@ -95,12 +88,53 @@ class IdentityContract extends Contract {
         return JSON.stringify(participant);
     }
 
+    async getAllParticipants(ctx) {
+        let identity = ctx.clientIdentity;
+
+        if (!this.isAdmin(identity)) {
+            throw new Error(`Only administrators can query all participants`);
+        }
+
+        const iterator = await ctx.stub.getStateByRange('', '');
+
+        const allResults = [];
+
+        while (true) {
+            const res = await iterator.next();
+
+            if (res.value && res.value.value.toString()) {
+                const key = res.value.key;
+
+                if (key.startsWith('Participant')) {
+                    let value;
+                    try {
+                        value = JSON.parse(res.value.value.toString('utf8'));
+                    } catch (err) {
+                        console.log(err);
+                        value = res.value.value.toString('utf8');
+                    }
+
+                    allResults.push({
+                        id: value.id,
+                        name: value.name,
+                        role: value.role
+                    });
+                }
+            }
+
+            if (res.done) {
+                await iterator.close();
+                return JSON.stringify(allResults);
+            }
+        }
+    }
+
     async updateParticipantRole(ctx, participantId, role) {
         let identity = ctx.clientIdentity;
 
         if (!this.isRoleValid(role)) {
             throw new Error(`The specified role is not valid, please enter a correct one. Valid roles are:
-            ${Role.DISTRIBUTOR}, ${Role.CUSTOMER}, ${Role.PRODUCER}`);
+            ${Role.AMDEX_ADMIN}, ${Role.DATA_OFFICER}, ${Role.DATA_SCIENTIST}`);
         }
 
         if (!this.isAdmin(identity)) {
@@ -120,7 +154,27 @@ class IdentityContract extends Contract {
 
         await ctx.stub.putState(`${participant.getType()}:${participantId}`, participant.serialise());
 
-        return "ok";
+        return JSON.stringify(participant);
+    }
+
+    async deleteParticipant(ctx, participantId) {
+        let identity = ctx.clientIdentity;
+
+        if (!this.isAdmin(identity)) {
+            throw new Error('Only administrators can delete other participants.');
+        }
+
+        const key = `Participant:${participantId}`;
+
+        let exists = await this.assetExists(ctx, key);
+
+        if (!exists) {
+            throw new Error(`EnrollRequest with id ${key} doesn't exist`);
+        }
+
+        await ctx.stub.deleteState(key);
+
+        return "DELETED"
     }
 }
 

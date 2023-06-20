@@ -10,18 +10,44 @@ class EnergyTradingContract extends Contract {
         console.log('Init ledger called');
     }
 
-    getParticipantRole(identity) {
-        return identity.getAttributeValue('role');
-    }
-
     async assetExists(ctx, assetId) {
         const buffer = await ctx.stub.getState(assetId);
         return (!!buffer && buffer.length > 0);
     }
 
+    isDistributor(identity) {
+        return identity.assertAttributeValue('role', 'DISTRIBUTOR');
+    }
+
+    isCustomer(identity) {
+        return identity.assertAttributeValue('role', 'CUSTOMER');
+    }
+
+    isProducer(identity) {
+        return identity.assertAttributeValue('role', 'PRODUCER');
+    }
+
+    isProducerCustomer(identity) {
+        return identity.assertAttributeValue('role', 'PRODUCER_CUSTOMER');
+    }
+
     // Create a new Asset
     async createAsset(ctx, participantId, id, producer, energyType, units) {
         console.info('START : Create Asset');
+
+        let identity = ctx.clientIdentity;
+        console.log(identity)
+
+        // Check if participant exists
+        const participantAsBytes = await ctx.stub.getState('Participant:'+participantId);
+        if (!participantAsBytes || participantAsBytes.length == 0) {
+            throw new Error(`Participant with id ${participantId} does not exist`);
+        }
+
+        // Only Distributors and Producers can create assets
+        if (!this.isDistributor(identity) && !this.isProducer(identity)) {
+            throw new Error('Permission denied: Only Distributors and Producers can create assets');
+        }
 
         const asset = new EnergyTrading(participantId, id, producer, energyType, units);
         asset.transactionHistory = [];
@@ -29,6 +55,8 @@ class EnergyTradingContract extends Contract {
         await ctx.stub.putState(id, asset.serialise());
         console.info('END : Create Asset');
     }
+
+
 
     // Trade energy between 2 peers
     async tradeEnergy(ctx, buyerId, buyingAssetNumber, sellerId, sellingAssetNumber, units) {

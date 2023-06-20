@@ -11,15 +11,20 @@ const path = require('path');
 
 async function main() {
     try {
+        // get configuration
+        const configPath = path.join(process.cwd(), './config.json');
+        const configJSON = fs.readFileSync(configPath, 'utf8');
+        const config = JSON.parse(configJSON);
+
         // load the network configuration
-        const ccpPath = path.resolve(process.env.FABRIC_PATH,'test-network','organizations', 'peerOrganizations', 'org1.example.com', 'connection-org1.json');
+        const ccpPath = path.resolve(process.env.FABRIC_PATH, config.connectionProfile);
         const ccp = JSON.parse(fs.readFileSync(ccpPath, 'utf8'));
-        console.log("Network configuration", JSON.stringify(ccp, 0, 2));
 
         // Create a new CA client for interacting with the CA.
-        const caInfo = ccp.certificateAuthorities['ca.org1.example.com'];
+        const caInfo = ccp.certificateAuthorities[config.caName];
         const caTLSCACerts = caInfo.tlsCACerts.pem;
         const ca = new FabricCAServices(caInfo.url, { trustedRoots: caTLSCACerts, verify: false }, caInfo.caName);
+
 
         // Create a new file system based wallet for managing identities.
         const walletPath = path.join(process.cwd(), 'wallet');
