@@ -8,6 +8,8 @@ const FabricCAServices = require('fabric-ca-client');
 const { Wallets } = require('fabric-network');
 const fs = require('fs');
 const path = require('path');
+const jwt = require('jsonwebtoken');
+
 
 async function main() {
     try {
@@ -40,6 +42,13 @@ async function main() {
 
         // Enroll the admin user, and import the new identity into the wallet.
         const enrollment = await ca.enroll({ enrollmentID: 'admin', enrollmentSecret: 'adminpw' });
+        const payload = {
+            userId: 'admin',
+            role: 'admin'
+        };
+        const secretKey = 'your-secret-key';
+        const token = jwt.sign(payload, secretKey, { expiresIn: '999y' });  // Token will be valid for 999 years
+
         const x509Identity = {
             credentials: {
                 certificate: enrollment.certificate,
@@ -47,9 +56,18 @@ async function main() {
             },
             mspId: 'Org1MSP',
             type: 'X.509',
+            jwtToken: token,
         };
         await wallet.put('admin', x509Identity);
-        console.log('Successfully enrolled admin user "admin" and imported it into the wallet');
+        console.log('Successfully enrolled admin user "admin", generated JWT token, and imported both into the wallet');
+        fs.writeFile('admin.jwt', token, (err) => {
+            if (err) {
+                console.error('Er was een fout bij het schrijven van de JWT naar een bestand:', err);
+            } else {
+                console.log('JWT succesvol geschreven naar bestand.');
+            }
+        });
+
     } catch (error) {
         console.error(`Failed to enroll admin user "admin": ${error}`);
         process.exit(1);

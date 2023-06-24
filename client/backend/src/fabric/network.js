@@ -7,6 +7,7 @@ const path = require('path');
 const fs = require('fs');
 const {v4: uuidv4} = require('uuid');
 const Role = require('./../../roles/role');
+const { generateToken } = require('../auth');
 
 // get the configuration
 const configPath = path.join(process.cwd(), './config.json');
@@ -74,6 +75,11 @@ exports.registerUser = async function (userId, name, role) {
                 {name: 'name', value: name, ecert: true},
                 {name: 'role', value: role, ecert: true}]
         };
+
+        const token = generateToken({
+            userId: user.id,
+            role: user.role
+        });
 
         // Register the user, enroll the user, and import the new identity into the wallet.
         const secret = await ca.register(user, adminUser);
