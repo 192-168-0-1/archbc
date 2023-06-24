@@ -138,7 +138,7 @@ class EnergyTradingContract extends Contract {
     // Update an asset
     async updateAsset(ctx, assetId, newValues) {
         console.info('START : Update Asset');
-
+        const jsonObject = this.convertNewValues(newValues);
         const exists = await this.assetExists(ctx, assetId);
         if (!exists) {
             throw new Error(`The asset ${assetId} does not exist`);
@@ -147,9 +147,9 @@ class EnergyTradingContract extends Contract {
         const assetAsBytes = await ctx.stub.getState(assetId);
         const asset = EnergyTrading.deserialize(assetAsBytes);
 
-        Object.keys(newValues).forEach((key) => {
-            asset[key] = newValues[key];
-        });
+        for (const key in jsonObject) {
+            asset[key] = jsonObject[key];
+        }
 
         await ctx.stub.putState(assetId, asset.serialise());
 
@@ -168,6 +168,40 @@ class EnergyTradingContract extends Contract {
         await ctx.stub.deleteState(assetId);
 
         console.info('END : Delete Asset');
+    }
+
+    convertNewValues(valueString) {
+        valueString = valueString.replace(/\\/g, ''); // Remove backslashes
+        valueString = valueString.replace(/[{}]/g, ''); // Remove backslashes
+        valueString = valueString.slice(1, -1); // Remove opening and closing curly braces
+    
+        let dic = {};
+        let valuePairs = valueString.split(",");
+    
+        for (let i = 0; i < valuePairs.length; i++) {
+            let pair = valuePairs[i].split(":");
+            let key = pair[0].trim().replace(/"/g, ""); // Remove double quotes and trim spaces
+            let value = pair[1].trim().replace(/"/g, ""); // Remove double quotes and trim spaces
+            dic[key] = value;
+        }
+    
+        return dic;
+    }
+     convertNewValues2(valueString) {
+         valueString = valueString.slice(1, valueString.length - 1);
+
+         let dic = {};
+         let valuePairs = valueString.split(",");
+
+
+         for (let i = 0; i < valuePairs.length; i++){
+             let pair = valuePairs[i].split(":");
+             let key = pair[0].replace(/"/g, "");
+             let value = pair[1].replace(/"/g, "");
+             dic[key] = value;
+         }
+
+         return dic;
     }
 }
 
