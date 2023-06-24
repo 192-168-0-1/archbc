@@ -179,7 +179,6 @@ app.post('/rest/assets',async (req, res) => {
     if (networkObj.error) {
         res.status(400).json({ message: networkObj.error });
     }
-
     let invokeResponse = await network.createAsset(networkObj, req.body.participantId, req.body.id, req.body.producer, req.body.energyType, req.body.units);
 
     if (invokeResponse.error) {
@@ -252,7 +251,7 @@ app.put('/rest/asset/:assetId', async (req, res) => {
         res.status(400).json({ message: networkObj.error });
     }
 
-    let invokeResponse = await network.updateAsset(networkObj, req.params.assetId, req.body.newValue);
+    let invokeResponse = await network.updateAsset(networkObj, req.params.assetId, JSON.stringify(req.body.newValue));
 
     if (invokeResponse.error) {
         res.status(400).json({ message: invokeResponse.error });
@@ -280,9 +279,6 @@ app.delete('/rest/asset/:assetId', async (req, res) => {
     }
 });
 
-app.get('/test', async (req, res) => {
-    return res.status(200).send('test');
-})
 
 const port = process.env.PORT || 8080;
 app.listen(port);
